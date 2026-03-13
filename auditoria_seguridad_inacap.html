@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditoría CIA — INACAP</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #060a10;
+    --panel:    #0b1220;
+    --border:   #1a2d4a;
+    --accent1:  #00e5ff;
+    --accent2:  #ff3d5a;
+    --accent3:  #39ff7a;
+    --warn:     #ffcc00;
+    --text:     #c8ddf0;
+    --dim:      #4a6580;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui:   'Rajdhani', sans-serif;
+    --font-head: 'Exo 2', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Scanline overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,229,255,.018) 2px, rgba(0,229,255,.018) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Grid bg ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 48px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .logo-line {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent1);
+    letter-spacing: 4px;
+    margin-bottom: 14px;
+    opacity: .7;
+  }
+  header h1 {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: clamp(28px, 5vw, 52px);
+    line-height: 1.1;
+    color: #fff;
+    letter-spacing: -1px;
+  }
+  header h1 span { color: var(--accent1); }
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 10px;
+    letter-spacing: 2px;
+  }
+
+  /* ── CIA badges ── */
+  .cia-row {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap; margin: 28px 0 0;
+  }
+  .cia-badge {
+    padding: 6px 22px;
+    border: 1px solid;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+  }
+  .cia-badge.c { border-color: var(--accent1); color: var(--accent1); }
+  .cia-badge.i { border-color: var(--accent3); color: var(--accent3); }
+  .cia-badge.a { border-color: var(--accent2); color: var(--accent2); }
+  .cia-badge:hover { background: rgba(255,255,255,.06); transform: translateY(-2px); }
+
+  /* ── Section panels ── */
+  .section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    animation: fadeUp .5s ease both;
+  }
+  .section:nth-child(2) { animation-delay: .1s; }
+  .section:nth-child(3) { animation-delay: .2s; }
+  .section:nth-child(4) { animation-delay: .3s; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .sec-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background .2s;
+  }
+  .sec-header:hover { background: rgba(255,255,255,.03); }
+  .sec-icon {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 3px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .sec-icon.c { background: rgba(0,229,255,.12); }
+  .sec-icon.i { background: rgba(57,255,122,.12); }
+  .sec-icon.a { background: rgba(255,61,90,.12); }
+
+  .sec-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 18px;
+    color: #fff;
+    flex: 1;
+  }
+  .sec-title small {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+  .chevron {
+    font-size: 20px;
+    color: var(--dim);
+    transition: transform .3s;
+  }
+  .section.open .chevron { transform: rotate(180deg); }
+
+  .sec-body {
+    display: none;
+    padding: 24px;
+    gap: 20px;
+    flex-direction: column;
+  }
+  .section.open .sec-body { display: flex; }
+
+  /* ── Context box ── */
+  .context-box {
+    background: rgba(0,0,0,.35);
+    border-left: 3px solid var(--accent1);
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    border-radius: 0 3px 3px 0;
+  }
+  .context-box.green { border-color: var(--accent3); }
+  .context-box.red   { border-color: var(--accent2); }
+
+  /* ── Simulator ── */
+  .sim-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Controls */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+  .ctrl-group label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  select, input[type=text], input[type=number] {
+    background: #0a1620;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:focus, input:focus { border-color: var(--accent1); }
+
+  .btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    text-transform: uppercase;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-cyan  { background: var(--accent1); color: #000; }
+  .btn-green { background: var(--accent3); color: #000; }
+  .btn-red   { background: var(--accent2); color: #fff; }
+  .btn-warn  { background: var(--warn);    color: #000; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--dim);
+  }
+  .btn-ghost:hover { border-color: var(--dim); color: var(--text); }
+
+  /* Terminal log */
+  .terminal {
+    background: #04080f;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    min-height: 120px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .terminal::-webkit-scrollbar { width: 5px; }
+  .terminal::-webkit-scrollbar-track { background: #04080f; }
+  .terminal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .log-ok   { color: var(--accent3); }
+  .log-deny { color: var(--accent2); }
+  .log-warn { color: var(--warn); }
+  .log-info { color: var(--accent1); }
+  .log-dim  { color: var(--dim); }
+  .log-line { display: block; }
+
+  /* Access table */
+  .access-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .access-table th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  .access-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(26,45,74,.5);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .access-table tr:hover td { background: rgba(0,229,255,.03); }
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .tag-ok   { background: rgba(57,255,122,.15); color: var(--accent3); }
+  .tag-deny { background: rgba(255,61,90,.15);  color: var(--accent2); }
+
+  /* Hash display */
+  .hash-display {
+    background: #04080f;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    word-break: break-all;
+    color: var(--accent1);
+    line-height: 1.6;
+  }
+
+  /* Services grid */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .service-card {
+    background: #04080f;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px;
+    text-align: center;
+    transition: border-color .3s;
+  }
+  .service-card.up   { border-color: rgba(57,255,122,.4); }
+  .service-card.down { border-color: rgba(255,61,90,.4); }
+  .svc-icon { font-size: 28px; margin-bottom: 8px; }
+  .svc-name {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .svc-users {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--dim);
+    margin-bottom: 10px;
+  }
+  .svc-status {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .svc-status.up   { color: var(--accent3); }
+  .svc-status.down { color: var(--accent2); }
+
+  /* Controls list */
+  .controls-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .ctrl-item {
+    background: rgba(0,0,0,.3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .ctrl-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .dot-c { background: var(--accent1); box-shadow: 0 0 6px var(--accent1); }
+  .dot-i { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+  .dot-a { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+
+  /* Progress bar */
+  .progress-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  }
+  .progress-bar { background: var(--border); border-radius: 2px; height: 6px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--accent2);
+    width: 0%;
+    transition: width 1s ease;
+  }
+
+  /* Blink cursor */
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Pulse dot */
+  .pulse-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--accent3);
+    animation: pulse 2s ease infinite;
+  }
+  .pulse-dot.red { background: var(--accent2); }
+  @keyframes pulse {
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:.4; transform:scale(.7); }
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px 0 0;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    line-height: 2;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-line">◈ SISTEMA DE AUDITORÍA INTERNA ◈</div>
+    <h1>Auditoría de Seguridad<br><span>INACAP</span></h1>
+    <p class="sub">PRINCIPIOS CIA · SIMULACIÓN INTERACTIVA · 2026</p>
+    <div class="cia-row">
+      <div class="cia-badge c" onclick="openSection('sec-c')">🔒 Confidencialidad</div>
+      <div class="cia-badge i" onclick="openSection('sec-i')">🛡 Integridad</div>
+      <div class="cia-badge a" onclick="openSection('sec-a')">⚡ Disponibilidad</div>
+    </div>
+  </header>
+
+  <!-- =============================================
+       MÓDULO 1 — CONFIDENCIALIDAD
+  ============================================= -->
+  <div class="section open" id="sec-c">
+    <div class="sec-header" onclick="toggleSection('sec-c')">
+      <div class="sec-icon c">🔒</div>
+      <div class="sec-title">
+        Confidencialidad
+        <small>CONTROL DE ACCESO A DATOS SENSIBLES</small>
+      </div>
+      <div class="chevron">⌄</div>
+    </div>
+    <div class="sec-body">
+
+      <div class="context-box">
+        Controles para evitar que un compañero acceda al registro de enfermedades preexistentes,
+        ingresos familiares o FUAS de otro alumno. Se implementa <strong>RBAC</strong>
+        (Role-Based Access Control) con log de auditoría en cada intento.
+      </div>
+
+      <!-- Simulator -->
+      <div>
+        <div class="sim-title">▸ Simulador de Acceso</div>
+        <div class="controls" style="margin-bottom:14px;">
+          <div class="ctrl-group">
+            <label>Rol del solicitante</label>
+            <select id="c-rol">
+              <option value="alumno">Alumno</option>
+              <option value="docente">Docente</option>
+              <option value="administrativo">Administrativo</option>
+              <option value="auditor">Auditor</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label>RUT solicitante</label>
+            <input id="c-rut-sol" type="text" value="12345678-9" style="width:130px">
+          </div>
+          <div class="ctrl-group">
+            <label>Recurso solicitado</label>
+            <select id="c-recurso">
+              <option value="fuas_ajeno">FUAS (ajeno)</option>
+              <option value="datos_sensibles_ajenos">Enf. / Ingresos (ajeno)</option>
+              <option value="notas_propias">Notas propias</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label>RUT objetivo</label>
+            <input id="c-rut-obj" type="text" value="98765432-1" style="width:130px">
+          </div>
+          <button class="btn btn-cyan" onclick="simularAcceso()">Simular acceso</button>
+          <button class="btn btn-ghost" onclick="limpiarLogC()">Limpiar</button>
+        </div>
+        <div class="terminal" id="log-c">
+          <span class="log-dim log-line">[ Sistema listo. Configura los parámetros y pulsa "Simular acceso". ]</span>
+        </div>
+      </div>
+
+      <!-- Tabla de permisos -->
+      <div>
+        <div class="sim-title">▸ Matriz de Permisos RBAC</div>
+        <table class="access-table">
+          <thead>
+            <tr>
+              <th>Rol</th>
+              <th>Notas propias</th>
+              <th>FUAS ajeno</th>
+              <th>Datos sensibles ajenos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#fff;font-weight:700">Alumno</td>
+              <td><span class="tag tag-ok">✅ SÍ *</span></td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+            </tr>
+            <tr>
+              <td style="color:#fff;font-weight:700">Docente</td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+            </tr>
+            <tr>
+              <td style="color:#fff;font-weight:700">Administrativo</td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+              <td><span class="tag tag-ok">✅ SÍ</span></td>
+              <td><span class="tag tag-ok">✅ SÍ</span></td>
+            </tr>
+            <tr>
+              <td style="color:#fff;font-weight:700">Auditor</td>
+              <td><span class="tag tag-deny">🚫 NO</span></td>
+              <td><span class="tag tag-ok">✅ SÍ</span></td>
+              <td><span class="tag tag-ok">✅ SÍ</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-family:var(--font-mono);font-size:10px;color:var(--dim);margin-top:8px;">* Solo si el RUT solicitante coincide con el RUT objetivo.</p>
+      </div>
+
+      <!-- Controles propuestos -->
+      <div>
+        <div class="sim-title">▸ Controles Propuestos</div>
+        <div class="controls-list">
+          <div class="ctrl-item"><div class="dot dot-c"></div>RBAC con principio de mínimo privilegio</div>
+          <div class="ctrl-item"><div class="dot dot-c"></div>Cifrado AES-256 para datos en reposo</div>
+          <div class="ctrl-item"><div class="dot dot-c"></div>TLS 1.3 para datos en tránsito</div>
+          <div class="ctrl-item"><div class="dot dot-c"></div>MFA obligatorio en accesos sensibles</div>
+          <div class="ctrl-item"><div class="dot dot-c"></div>Log de auditoría con alertas automáticas</div>
+          <div class="ctrl-item"><div class="dot dot-c"></div>Segmentación de BD por tipo de dato</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =============================================
+       MÓDULO 2 — INTEGRIDAD
+  ============================================= -->
+  <div class="section open" id="sec-i">
+    <div class="sec-header" onclick="toggleSection('sec-i')">
+      <div class="sec-icon i">🛡</div>
+      <div class="sec-title">
+        Integridad
+        <small>DETECCIÓN DE ALTERACIÓN DE NOTAS Y ASISTENCIA</small>
+      </div>
+      <div class="chevron">⌄</div>
+    </div>
+    <div class="sec-body">
+
+      <div class="context-box green">
+        Si un alumno intercepta el tráfico de red o accede internamente para modificar notas
+        o asistencia, el sistema detecta la anomalía mediante <strong>hashing SHA-256</strong>
+        de los registros académicos y registro inmutable de cambios.
+      </div>
+
+      <!-- Registro alumno -->
+      <div>
+        <div class="sim-title">▸ Registro Académico Protegido</div>
+        <div class="controls" style="margin-bottom:14px;flex-wrap:wrap;">
+          <div class="ctrl-group">
+            <label>RUT alumno</label>
+            <input id="i-rut" type="text" value="12345678-9" style="width:130px">
+          </div>
+          <div class="ctrl-group">
+            <label>Nota 1</label>
+            <input id="i-n1" type="number" value="3.5" min="1" max="7" step="0.1" style="width:80px">
+          </div>
+          <div class="ctrl-group">
+            <label>Nota 2</label>
+            <input id="i-n2" type="number" value="4.0" min="1" max="7" step="0.1" style="width:80px">
+          </div>
+          <div class="ctrl-group">
+            <label>Asistencia %</label>
+            <input id="i-asist" type="number" value="60" min="0" max="100" style="width:80px">
+          </div>
+          <button class="btn btn-green" onclick="registrarAlumno()">Registrar</button>
+        </div>
+        <div id="hash-area" style="display:none">
+          <div class="sim-title">Hash SHA-256 del registro:</div>
+          <div class="hash-display" id="hash-display">—</div>
+        </div>
+      </div>
+
+      <!-- Intentos de modificación -->
+      <div id="mod-area" style="display:none">
+        <div class="sim-title">▸ Simulador de Modificación</div>
+        <div class="controls" style="margin-bottom:14px;">
+          <div class="ctrl-group">
+            <label>Campo a modificar</label>
+            <select id="i-campo">
+              <option value="nota_1">Nota 1</option>
+              <option value="nota_2">Nota 2</option>
+              <option value="asistencia_pct">Asistencia %</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <label>Nuevo valor</label>
+            <input id="i-valor" type="number" value="7.0" style="width:80px">
+          </div>
+          <div class="ctrl-group">
+            <label>Editor</label>
+            <input id="i-editor" type="text" value="alumno_12345678-9" style="width:160px">
+          </div>
+          <button class="btn btn-warn" onclick="modificar(false)">⚡ Modificar (NO autorizado)</button>
+          <button class="btn btn-green" onclick="modificar(true)">✅ Modificar (autorizado)</button>
+        </div>
+        <div class="terminal" id="log-i">
+          <span class="log-dim log-line">[ Registra un alumno primero. ]</span>
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <div>
+        <div class="sim-title">▸ Controles Propuestos</div>
+        <div class="controls-list">
+          <div class="ctrl-item"><div class="dot dot-i"></div>Hash SHA-256 en cada registro académico</div>
+          <div class="ctrl-item"><div class="dot dot-i"></div>HTTPS + certificados válidos (anti-MITM)</div>
+          <div class="ctrl-item"><div class="dot dot-i"></div>Registro inmutable con autor y timestamp</div>
+          <div class="ctrl-item"><div class="dot dot-i"></div>Solo docentes autorizados editan notas</div>
+          <div class="ctrl-item"><div class="dot dot-i"></div>Alertas ante cambios fuera de horario</div>
+          <div class="ctrl-item"><div class="dot dot-i"></div>Replicación en BD secundaria (read-only)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =============================================
+       MÓDULO 3 — DISPONIBILIDAD
+  ============================================= -->
+  <div class="section open" id="sec-a">
+    <div class="sec-header" onclick="toggleSection('sec-a')">
+      <div class="sec-icon a">⚡</div>
+      <div class="sec-title">
+        Disponibilidad
+        <small>SIMULACIÓN DE ATAQUE EN SEMANA DE EXÁMENES</small>
+      </div>
+      <div class="chevron">⌄</div>
+    </div>
+    <div class="sec-body">
+
+      <div class="context-box red">
+        Un ataque DDoS durante la semana de exámenes finales dejaría inoperativos
+        <strong>INACAPMail, LMS Moodle e Intranet</strong>, afectando a más de 135.000 usuarios
+        con graves consecuencias reputacionales y académicas.
+      </div>
+
+      <!-- Estado de servicios -->
+      <div>
+        <div class="sim-title">▸ Estado de Servicios en Tiempo Real</div>
+        <div class="services-grid">
+          <div class="service-card up" id="svc-mail">
+            <div class="svc-icon">📧</div>
+            <div class="svc-name">INACAPMail</div>
+            <div class="svc-users">45,000 usuarios</div>
+            <div class="svc-status up" id="svc-mail-s">● ACTIVO</div>
+          </div>
+          <div class="service-card up" id="svc-lms">
+            <div class="svc-icon">📚</div>
+            <div class="svc-name">LMS Moodle</div>
+            <div class="svc-users">38,000 usuarios</div>
+            <div class="svc-status up" id="svc-lms-s">● ACTIVO</div>
+          </div>
+          <div class="service-card up" id="svc-intra">
+            <div class="svc-icon">🏫</div>
+            <div class="svc-name">Intranet</div>
+            <div class="svc-users">52,000 usuarios</div>
+            <div class="svc-status up" id="svc-intra-s">● ACTIVO</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles ataque -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-red" onclick="simularAtaque()">🔴 Simular Ataque DDoS</button>
+        <button class="btn btn-green" onclick="activarBCP()">🛡 Activar Plan BCP</button>
+        <button class="btn btn-ghost" onclick="resetServicios()">↺ Resetear</button>
+      </div>
+
+      <!-- Progreso del ataque -->
+      <div id="ataque-progress" style="display:none">
+        <div class="sim-title">▸ Usuarios afectados</div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>INACAPMail</span><span id="p-mail-val">0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="p-mail" style="background:var(--accent2)"></div></div>
+        </div>
+        <div class="progress-wrap" style="margin-top:8px">
+          <div class="progress-label"><span>LMS Moodle</span><span id="p-lms-val">0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="p-lms" style="background:var(--accent2)"></div></div>
+        </div>
+        <div class="progress-wrap" style="margin-top:8px">
+          <div class="progress-label"><span>Intranet</span><span id="p-intra-val">0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="p-intra" style="background:var(--accent2)"></div></div>
+        </div>
+      </div>
+
+      <!-- Log disponibilidad -->
+      <div class="terminal" id="log-a">
+        <span class="log-dim log-line">[ Sistema monitoreando... todos los servicios operativos. ]</span>
+      </div>
+
+      <!-- Impacto -->
+      <div id="impacto-box" style="display:none">
+        <div class="sim-title">▸ Impacto Estimado del Ataque</div>
+        <div class="context-box red" style="line-height:2">
+          ⚠️ <strong>135,000 usuarios afectados</strong> durante semana de exámenes finales.<br>
+          • Alumnos sin acceso a evaluaciones y material en Moodle<br>
+          • Comunicaciones institucionales completamente interrumpidas<br>
+          • Imposibilidad de revisar horarios, notas y trámites<br>
+          • Daño reputacional: cobertura masiva en redes sociales<br>
+          • Riesgo legal por incumplimiento del deber de continuidad educativa
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <div>
+        <div class="sim-title">▸ Controles Propuestos</div>
+        <div class="controls-list">
+          <div class="ctrl-item"><div class="dot dot-a"></div>Protección anti-DDoS (Cloudflare / Akamai)</div>
+          <div class="ctrl-item"><div class="dot dot-a"></div>Failover automático a servidores en nube</div>
+          <div class="ctrl-item"><div class="dot dot-a"></div>Plan BCP con RTO &lt; 2 horas</div>
+          <div class="ctrl-item"><div class="dot dot-a"></div>Comunicados proactivos a alumnos/docentes</div>
+          <div class="ctrl-item"><div class="dot dot-a"></div>Mantenimiento fuera de períodos críticos</div>
+          <div class="ctrl-item"><div class="dot dot-a"></div>Monitoreo 24/7 con SIEM e IDS/IPS</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    AUDITORÍA DE SEGURIDAD — INACAP &nbsp;|&nbsp; PRINCIPIOS CIA &nbsp;|&nbsp; 2026<br>
+    Confidencialidad · Integridad · Disponibilidad
+  </footer>
+</div>
+
+<script>
+// ── Utils ──────────────────────────────────────────────────
+function ts() {
+  return new Date().toLocaleTimeString('es-CL', {hour12:false});
+}
+function appendLog(id, html) {
+  const t = document.getElementById(id);
+  t.innerHTML += `<span class="log-line">[${ts()}] ${html}</span>\n`;
+  t.scrollTop = t.scrollHeight;
+}
+function clearLog(id) {
+  document.getElementById(id).innerHTML = '';
+}
+function toggleSection(id) {
+  const s = document.getElementById(id);
+  s.classList.toggle('open');
+}
+function openSection(id) {
+  document.getElementById(id).classList.add('open');
+  document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── MÓDULO 1: CONFIDENCIALIDAD ─────────────────────────────
+const PERMISOS = {
+  alumno:          { notas_propias: true,  datos_sensibles_ajenos: false, fuas_ajeno: false },
+  docente:         { notas_propias: false, datos_sensibles_ajenos: false, fuas_ajeno: false },
+  administrativo:  { notas_propias: false, datos_sensibles_ajenos: true,  fuas_ajeno: true  },
+  auditor:         { notas_propias: false, datos_sensibles_ajenos: true,  fuas_ajeno: true  },
+};
+
+function simularAcceso() {
+  const rol     = document.getElementById('c-rol').value;
+  const rutSol  = document.getElementById('c-rut-sol').value.trim();
+  const recurso = document.getElementById('c-recurso').value;
+  const rutObj  = document.getElementById('c-rut-obj').value.trim();
+
+  let permitido;
+  const perms = PERMISOS[rol];
+  if (!perms) {
+    permitido = false;
+  } else if (rol === 'alumno') {
+    if (recurso === 'notas_propias') permitido = (rutSol === rutObj);
+    else permitido = false;
+  } else {
+    permitido = !!perms[recurso];
+  }
+
+  const ip = `192.168.1.${Math.floor(Math.random()*253+2)}`;
+
+  if (permitido) {
+    appendLog('log-c',
+      `<span class="log-ok">✅ ACCESO PERMITIDO</span> ` +
+      `<span class="log-dim">usuario:</span> <span class="log-info">${rutSol}</span> ` +
+      `<span class="log-dim">rol:</span> <span style="color:#fff">${rol}</span> ` +
+      `<span class="log-dim">recurso:</span> ${recurso} ` +
+      `<span class="log-dim">ip:</span> ${ip}`
+    );
+  } else {
+    appendLog('log-c',
+      `<span class="log-deny">🚫 ACCESO DENEGADO</span> ` +
+      `<span class="log-dim">usuario:</span> <span class="log-info">${rutSol}</span> ` +
+      `<span class="log-dim">rol:</span> <span style="color:#fff">${rol}</span> ` +
+      `<span class="log-dim">recurso:</span> ${recurso} ` +
+      `<span class="log-dim">→ Evento registrado | ip:</span> ${ip}`
+    );
+  }
+}
+function limpiarLogC() { clearLog('log-c'); }
+
+// ── MÓDULO 2: INTEGRIDAD ───────────────────────────────────
+let registros = {};
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function registrarAlumno() {
+  const rut   = document.getElementById('i-rut').value.trim();
+  const n1    = parseFloat(document.getElementById('i-n1').value);
+  const n2    = parseFloat(document.getElementById('i-n2').value);
+  const asist = parseFloat(document.getElementById('i-asist').value);
+
+  const datos = { rut, nota_1: n1, nota_2: n2, asistencia_pct: asist };
+  const hash  = await sha256(JSON.stringify(datos));
+
+  registros[rut] = { datos: { ...datos }, hash_guardado: hash };
+
+  document.getElementById('hash-area').style.display = 'block';
+  document.getElementById('mod-area').style.display = 'block';
+  document.getElementById('hash-display').textContent =
+    `RUT: ${rut}\nDatos: ${JSON.stringify(datos)}\nSHA-256: ${hash}`;
+
+  clearLog('log-i');
+  appendLog('log-i',
+    `<span class="log-ok">[INTEGRIDAD]</span> Registro creado para <span class="log-info">${rut}</span> ` +
+    `| Hash: <span class="log-ok">${hash.substring(0,24)}…</span>`
+  );
+}
+
+async function modificar(autorizado) {
+  const rut    = document.getElementById('i-rut').value.trim();
+  const campo  = document.getElementById('i-campo').value;
+  const valor  = parseFloat(document.getElementById('i-valor').value);
+  const editor = document.getElementById('i-editor').value.trim();
+
+  if (!registros[rut]) {
+    appendLog('log-i', `<span class="log-deny">[ERROR]</span> RUT ${rut} no registrado.`);
+    return;
+  }
+
+  const reg = registros[rut];
+  const valorAnterior = reg.datos[campo];
+  const datosTemp = { ...reg.datos, [campo]: valor };
+  const hashNuevo = await sha256(JSON.stringify(datosTemp));
+
+  if (!autorizado) {
+    appendLog('log-i',
+      `<span class="log-warn">🚨 [ALERTA INTEGRIDAD]</span> Modificación <span class="log-deny">NO AUTORIZADA</span> detectada.`
+    );
+    appendLog('log-i',
+      `&nbsp;&nbsp;Campo: <span class="log-info">${campo}</span> | ` +
+      `<span style="color:#fff">${valorAnterior}</span> → <span class="log-deny">${valor}</span> | ` +
+      `Editor: <span class="log-warn">${editor}</span>`
+    );
+    appendLog('log-i',
+      `&nbsp;&nbsp;<span class="log-deny">Cambio REVERTIDO.</span> Notificación enviada al área de seguridad.`
+    );
+    // Verificar que el hash NO cambió
+    appendLog('log-i',
+      `[VERIFICACIÓN] <span class="log-ok">✅ Registro ÍNTEGRO</span> — Hash sin alteración.`
+    );
+    document.getElementById('hash-display').textContent =
+      `RUT: ${rut}\nDatos (sin cambios): ${JSON.stringify(reg.datos)}\nSHA-256: ${reg.hash_guardado}`;
+  } else {
+    reg.datos[campo] = valor;
+    reg.hash_guardado = hashNuevo;
+    appendLog('log-i',
+      `<span class="log-ok">✅ [INTEGRIDAD]</span> Modificación <span class="log-ok">AUTORIZADA</span> aceptada.`
+    );
+    appendLog('log-i',
+      `&nbsp;&nbsp;Campo: <span class="log-info">${campo}</span> | ` +
+      `<span style="color:#fff">${valorAnterior}</span> → <span class="log-ok">${valor}</span> | ` +
+      `Editor: <span class="log-ok">${editor}</span>`
+    );
+    appendLog('log-i',
+      `&nbsp;&nbsp;Nuevo hash: <span class="log-ok">${hashNuevo.substring(0,24)}…</span>`
+    );
+    document.getElementById('hash-display').textContent =
+      `RUT: ${rut}\nDatos actualizados: ${JSON.stringify(reg.datos)}\nSHA-256: ${hashNuevo}`;
+  }
+}
+
+// ── MÓDULO 3: DISPONIBILIDAD ───────────────────────────────
+let serviciosActivos = { mail: true, lms: true, intra: true };
+let bcpActivo = false;
+
+function setServicio(id, up) {
+  const card  = document.getElementById(`svc-${id}`);
+  const label = document.getElementById(`svc-${id}-s`);
+  if (up) {
+    card.className  = 'service-card up';
+    label.className = 'svc-status up';
+    label.textContent = '● ACTIVO';
+  } else {
+    card.className  = 'service-card down';
+    label.className = 'svc-status down';
+    label.textContent = '● CAÍDO';
+  }
+}
+
+function simularAtaque() {
+  if (bcpActivo) return;
+  clearLog('log-a');
+  document.getElementById('ataque-progress').style.display = 'block';
+  document.getElementById('impacto-box').style.display = 'block';
+
+  const svcs = [
+    { id: 'mail',  pId:'p-mail',  vId:'p-mail-val',  total: 45000, label:'INACAPMail' },
+    { id: 'lms',   pId:'p-lms',   vId:'p-lms-val',   total: 38000, label:'LMS Moodle' },
+    { id: 'intra', pId:'p-intra', vId:'p-intra-val',  total: 52000, label:'Intranet'   },
+  ];
+
+  appendLog('log-a',
+    `<span class="log-deny">🔴 ATAQUE DDoS DETECTADO</span> — Semana de exámenes finales`
+  );
+
+  svcs.forEach((s, idx) => {
+    setTimeout(() => {
+      setServicio(s.id, false);
+      serviciosActivos[s.id] = false;
+      document.getElementById(s.pId).style.width = '100%';
+      document.getElementById(s.vId).textContent = s.total.toLocaleString('es-CL') + ' usuarios';
+      appendLog('log-a',
+        `<span class="log-deny">❌ ${s.label}</span> — CAÍDO | ${s.total.toLocaleString('es-CL')} usuarios afectados`
+      );
+    }, idx * 600);
+  });
+
+  setTimeout(() => {
+    appendLog('log-a',
+      `<span class="log-warn">⚠️ Total:</span> 135,000 usuarios afectados. Active el Plan BCP.`
+    );
+  }, 2200);
+}
+
+function activarBCP() {
+  if (!Object.values(serviciosActivos).some(v => !v)) {
+    appendLog('log-a', `<span class="log-dim">Sin ataque activo. Simula uno primero.</span>`);
+    return;
+  }
+  bcpActivo = true;
+  const pasos = [
+    [0,    `<span class="log-info">🛡 PLAN BCP ACTIVADO</span> — Notificando CSIRT interno`],
+    [800,  `<span class="log-ok">+00:05h</span> → Activando servidores de respaldo en nube`],
+    [1600, `<span class="log-ok">+00:10h</span> → Redirigiendo tráfico a CDN anti-DDoS (Cloudflare)`],
+    [2400, `<span class="log-ok">+00:30h</span> → Servicios restaurados en modo degradado`],
+    [3200, `<span class="log-ok">+01:00h</span> → Comunicado oficial enviado a 135,000 usuarios`],
+    [4000, null],
+  ];
+  pasos.forEach(([delay, msg], i) => {
+    setTimeout(() => {
+      if (msg) appendLog('log-a', msg);
+      if (i === pasos.length - 1) {
+        ['mail','lms','intra'].forEach(id => {
+          setServicio(id, true);
+          serviciosActivos[id] = true;
+        });
+        ['p-mail','p-lms','p-intra'].forEach(id => {
+          document.getElementById(id).style.background = 'var(--accent3)';
+          document.getElementById(id).style.width = '100%';
+        });
+        document.getElementById('p-mail-val').textContent  = '45,000 — RESTAURADO';
+        document.getElementById('p-lms-val').textContent   = '38,000 — RESTAURADO';
+        document.getElementById('p-intra-val').textContent = '52,000 — RESTAURADO';
+        appendLog('log-a',
+          `<span class="log-ok">✅ Todos los servicios RESTAURADOS.</span> RTO: &lt; 2 horas.`
+        );
+        bcpActivo = false;
+      }
+    }, delay);
+  });
+}
+
+function resetServicios() {
+  ['mail','lms','intra'].forEach(id => { setServicio(id, true); serviciosActivos[id] = true; });
+  ['p-mail','p-lms','p-intra'].forEach(id => {
+    document.getElementById(id).style.width = '0%';
+    document.getElementById(id).style.background = 'var(--accent2)';
+  });
+  document.getElementById('p-mail-val').textContent  = '0';
+  document.getElementById('p-lms-val').textContent   = '0';
+  document.getElementById('p-intra-val').textContent = '0';
+  document.getElementById('ataque-progress').style.display = 'none';
+  document.getElementById('impacto-box').style.display = 'none';
+  clearLog('log-a');
+  appendLog('log-a', `<span class="log-dim">[ Sistema reseteado. Todos los servicios operativos. ]</span>`);
+  bcpActivo = false;
+}
+</script>
+</body>
+</html>
