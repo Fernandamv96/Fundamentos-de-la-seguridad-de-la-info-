@@ -21,6 +21,7 @@ from typing import Optional
 # (enfermedades preexistentes, ingresos familiares, FUAS)
 # ============================================================
 
+
 class ControlDeAcceso:
     """
     Simula controles de confidencialidad para evitar que compañeros
@@ -29,32 +30,36 @@ class ControlDeAcceso:
 
     # Roles y sus permisos sobre datos sensibles
     PERMISOS = {
-        "alumno":       {"notas_propias": True,  "datos_sensibles_ajenos": False, "fuas_ajeno": False},
-        "docente":      {"notas_propias": False,  "datos_sensibles_ajenos": False, "fuas_ajeno": False},
-        "administrativo": {"notas_propias": False, "datos_sensibles_ajenos": True,  "fuas_ajeno": True},
-        "auditor":      {"notas_propias": False,  "datos_sensibles_ajenos": True,  "fuas_ajeno": True},
+        "alumno": {"notas_propias": True, "datos_sensibles_ajenos": False, "fuas_ajeno": False},
+        "docente": {"notas_propias": False, "datos_sensibles_ajenos": False, "fuas_ajeno": False},
+        "administrativo": {
+            "notas_propias": False,
+            "datos_sensibles_ajenos": True,
+            "fuas_ajeno": True,
+        },
+        "auditor": {"notas_propias": False, "datos_sensibles_ajenos": True, "fuas_ajeno": True},
     }
 
     def __init__(self):
         # Registro de accesos (log de auditoría)
         self.log_accesos: list[dict] = []
 
-    def _registrar_evento(self, usuario: str, rol: str, recurso: str,
-                          rut_objetivo: str, permitido: bool) -> None:
+    def _registrar_evento(
+        self, usuario: str, rol: str, recurso: str, rut_objetivo: str, permitido: bool
+    ) -> None:
         """Registra cada intento de acceso para auditoría posterior."""
         evento = {
-            "timestamp":    datetime.datetime.now().isoformat(),
-            "usuario":      usuario,
-            "rol":          rol,
-            "recurso":      recurso,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "usuario": usuario,
+            "rol": rol,
+            "recurso": recurso,
             "rut_objetivo": rut_objetivo,
-            "permitido":    permitido,
-            "ip_simulada":  f"192.168.1.{random.randint(2, 254)}",
+            "permitido": permitido,
+            "ip_simulada": f"192.168.1.{random.randint(2, 254)}",
         }
         self.log_accesos.append(evento)
 
-    def solicitar_acceso(self, usuario: str, rol: str,
-                         recurso: str, rut_objetivo: str) -> bool:
+    def solicitar_acceso(self, usuario: str, rol: str, recurso: str, rut_objetivo: str) -> bool:
         """
         Evalúa si el usuario tiene permiso para acceder al recurso solicitado.
 
@@ -74,7 +79,7 @@ class ControlDeAcceso:
                     permitido = False
                 else:
                     # Verifica que el alumno acceda a sus propios datos
-                    permitido = (usuario == rut_objetivo)
+                    permitido = usuario == rut_objetivo
             else:
                 permitido = permisos_rol.get(recurso, False)
 
@@ -100,6 +105,7 @@ class ControlDeAcceso:
 # Detección de modificación no autorizada de notas/asistencia
 # ============================================================
 
+
 class SistemaIntegridad:
     """
     Simula mecanismos para detectar y prevenir alteraciones
@@ -112,34 +118,36 @@ class SistemaIntegridad:
     """
 
     def __init__(self):
-        self.registros: dict[str, dict] = {}   # rut → datos académicos
-        self.historial: list[dict] = []        # historial de modificaciones
+        self.registros: dict[str, dict] = {}  # rut → datos académicos
+        self.historial: list[dict] = []  # historial de modificaciones
 
     def _calcular_hash(self, datos: dict) -> str:
         """Genera un hash SHA-256 determinista del registro académico."""
         contenido = str(sorted(datos.items())).encode("utf-8")
         return hashlib.sha256(contenido).hexdigest()
 
-    def registrar_alumno(self, rut: str, nota_1: float,
-                         nota_2: float, asistencia_pct: float) -> None:
+    def registrar_alumno(
+        self, rut: str, nota_1: float, nota_2: float, asistencia_pct: float
+    ) -> None:
         """Crea el registro inicial con su hash de integridad."""
         datos = {
-            "rut":            rut,
-            "nota_1":         nota_1,
-            "nota_2":         nota_2,
+            "rut": rut,
+            "nota_1": nota_1,
+            "nota_2": nota_2,
             "asistencia_pct": asistencia_pct,
         }
         hash_inicial = self._calcular_hash(datos)
         self.registros[rut] = {
-            "datos":          datos,
-            "hash_guardado":  hash_inicial,
+            "datos": datos,
+            "hash_guardado": hash_inicial,
             "ultima_edicion": datetime.datetime.now().isoformat(),
-            "editor":         "sistema",
+            "editor": "sistema",
         }
         print(f"[INTEGRIDAD] Registro creado para RUT {rut}  |  Hash: {hash_inicial[:20]}...")
 
-    def modificar_nota(self, rut: str, campo: str,
-                       nuevo_valor: float, editor: str, autorizado: bool) -> None:
+    def modificar_nota(
+        self, rut: str, campo: str, nuevo_valor: float, editor: str, autorizado: bool
+    ) -> None:
         """
         Simula un intento de modificación (autorizado o no).
         Si no está autorizado, el sistema detecta la anomalía.
@@ -156,15 +164,15 @@ class SistemaIntegridad:
         hash_nuevo = self._calcular_hash(registro["datos"])
 
         evento = {
-            "timestamp":        datetime.datetime.now().isoformat(),
-            "rut":              rut,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "rut": rut,
             "campo_modificado": campo,
-            "valor_anterior":   datos_anteriores.get(campo),
-            "valor_nuevo":      nuevo_valor,
-            "editor":           editor,
-            "autorizado":       autorizado,
-            "hash_antes":       registro["hash_guardado"],
-            "hash_despues":     hash_nuevo,
+            "valor_anterior": datos_anteriores.get(campo),
+            "valor_nuevo": nuevo_valor,
+            "editor": editor,
+            "autorizado": autorizado,
+            "hash_antes": registro["hash_guardado"],
+            "hash_despues": hash_nuevo,
         }
         self.historial.append(evento)
 
@@ -179,9 +187,9 @@ class SistemaIntegridad:
             registro["datos"][campo] = datos_anteriores[campo]
         else:
             # Actualizar hash legítimo
-            registro["hash_guardado"]  = hash_nuevo
+            registro["hash_guardado"] = hash_nuevo
             registro["ultima_edicion"] = datetime.datetime.now().isoformat()
-            registro["editor"]         = editor
+            registro["editor"] = editor
             print(f"[INTEGRIDAD] Modificación AUTORIZADA aceptada para {rut}.")
 
     def verificar_integridad(self, rut: str) -> bool:
@@ -190,7 +198,7 @@ class SistemaIntegridad:
         if not registro:
             return False
         hash_actual = self._calcular_hash(registro["datos"])
-        integro     = (hash_actual == registro["hash_guardado"])
+        integro = hash_actual == registro["hash_guardado"]
         estado = "✅ ÍNTEGRO" if integro else "🚨 COMPROMETIDO"
         print(f"[VERIFICACIÓN] RUT {rut}: {estado}")
         return integro
@@ -201,14 +209,17 @@ class SistemaIntegridad:
         print("=" * 60)
         for e in self.historial:
             marca = "🟢" if e["autorizado"] else "🔴"
-            print(f"{marca} [{e['timestamp']}] {e['rut']} — {e['campo_modificado']}: "
-                  f"{e['valor_anterior']} → {e['valor_nuevo']}  (por: {e['editor']})")
+            print(
+                f"{marca} [{e['timestamp']}] {e['rut']} — {e['campo_modificado']}: "
+                f"{e['valor_anterior']} → {e['valor_nuevo']}  (por: {e['editor']})"
+            )
 
 
 # ============================================================
 # MÓDULO 3 — DISPONIBILIDAD
 # Simulación de ataque DoS en semana de exámenes y plan de respuesta
 # ============================================================
+
 
 class SimuladorDisponibilidad:
     """
@@ -223,7 +234,7 @@ class SimuladorDisponibilidad:
     SERVICIOS = {
         "INACAPMail": {"usuarios_activos": 45_000, "critico": True},
         "LMS_Moodle": {"usuarios_activos": 38_000, "critico": True},
-        "Intranet":   {"usuarios_activos": 52_000, "critico": True},
+        "Intranet": {"usuarios_activos": 52_000, "critico": True},
     }
 
     def __init__(self):
@@ -252,11 +263,11 @@ class SimuladorDisponibilidad:
         print("  • Riesgo legal: incumplimiento del deber de continuidad educativa")
 
         incidente = {
-            "timestamp":    datetime.datetime.now().isoformat(),
-            "tipo_ataque":  tipo,
-            "servicios":    list(self.SERVICIOS.keys()),
-            "afectados":    total_afectados,
-            "resuelto":     False,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "tipo_ataque": tipo,
+            "servicios": list(self.SERVICIOS.keys()),
+            "afectados": total_afectados,
+            "resuelto": False,
         }
         self.incidentes.append(incidente)
 
@@ -279,7 +290,7 @@ class SimuladorDisponibilidad:
 
         for tiempo, accion in pasos:
             print(f"  +{tiempo} h → {accion}")
-            time.sleep(0.1)   # pausa visual de simulación
+            time.sleep(0.1)  # pausa visual de simulación
 
         # Restaurar servicios
         for servicio in self.estado_servicios:
@@ -299,6 +310,7 @@ class SimuladorDisponibilidad:
 # ============================================================
 # PROGRAMA PRINCIPAL — DEMOSTRACIÓN COMPLETA
 # ============================================================
+
 
 def separador(titulo: str) -> None:
     print("\n" + "█" * 60)
