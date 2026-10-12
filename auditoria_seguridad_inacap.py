@@ -69,20 +69,12 @@ class ControlDeAcceso:
         - Separación de datos por RUT (un alumno no ve datos de otro)
         - Registro de auditoría en cada intento
         """
-        if rol not in self.PERMISOS:
-            permitido = False
-        else:
-            permisos_rol = self.PERMISOS[rol]
+        # Denegar por defecto: rol o recurso desconocido => sin acceso
+        permitido = self.PERMISOS.get(rol, {}).get(recurso, False)
 
-            # Un alumno solo puede ver SUS PROPIOS datos básicos
-            if rol == "alumno":
-                if recurso in ("datos_sensibles_ajenos", "fuas_ajeno"):
-                    permitido = False
-                else:
-                    # Verifica que el alumno acceda a sus propios datos
-                    permitido = usuario == rut_objetivo
-            else:
-                permitido = permisos_rol.get(recurso, False)
+        # Un alumno solo puede ver SUS PROPIOS datos
+        if permitido and rol == "alumno":
+            permitido = usuario == rut_objetivo
 
         self._registrar_evento(usuario, rol, recurso, rut_objetivo, permitido)
         return permitido
@@ -158,6 +150,9 @@ class SistemaIntegridad:
             return
 
         registro = self.registros[rut]
+        if campo not in registro["datos"]:
+            print(f"[ERROR] Campo '{campo}' no existe en el registro académico.")
+            return
         datos_anteriores = registro["datos"].copy()
 
         # Aplicar el cambio
