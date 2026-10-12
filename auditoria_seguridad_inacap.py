@@ -9,11 +9,11 @@ Contexto  : Simulación de controles de seguridad para los sistemas INACAP
 =============================================================================
 """
 
-import hashlib
 import datetime
+import hashlib
 import random
 import time
-from typing import Optional
+from typing import ClassVar
 
 # ============================================================
 # MÓDULO 1 — CONFIDENCIALIDAD
@@ -29,7 +29,7 @@ class ControlDeAcceso:
     """
 
     # Roles y sus permisos sobre datos sensibles
-    PERMISOS = {
+    PERMISOS: ClassVar[dict[str, dict[str, bool]]] = {
         "alumno": {"notas_propias": True, "datos_sensibles_ajenos": False, "fuas_ajeno": False},
         "docente": {"notas_propias": False, "datos_sensibles_ajenos": False, "fuas_ajeno": False},
         "administrativo": {
@@ -55,7 +55,8 @@ class ControlDeAcceso:
             "recurso": recurso,
             "rut_objetivo": rut_objetivo,
             "permitido": permitido,
-            "ip_simulada": f"192.168.1.{random.randint(2, 254)}",
+            # random solo simula una IP para el log; no tiene uso criptográfico
+            "ip_simulada": f"192.168.1.{random.randint(2, 254)}",  # noqa: S311
         }
         self.log_accesos.append(evento)
 
@@ -178,11 +179,11 @@ class SistemaIntegridad:
 
         if not autorizado:
             # 🚨 ALERTA: modificación detectada sin autorización
-            print(f"\n🚨 [ALERTA INTEGRIDAD] Modificación NO AUTORIZADA detectada.")
+            print("\n🚨 [ALERTA INTEGRIDAD] Modificación NO AUTORIZADA detectada.")
             print(f"   RUT     : {rut}")
             print(f"   Campo   : {campo}  |  {datos_anteriores.get(campo)} → {nuevo_valor}")
             print(f"   Editor  : {editor}")
-            print(f"   Acción  : Cambio REVERTIDO. Notificación enviada al área de seguridad.")
+            print("   Acción  : Cambio REVERTIDO. Notificación enviada al área de seguridad.")
             # Revertir el cambio
             registro["datos"][campo] = datos_anteriores[campo]
         else:
@@ -231,7 +232,7 @@ class SimuladorDisponibilidad:
     Incluye un plan de respuesta y métricas de impacto.
     """
 
-    SERVICIOS = {
+    SERVICIOS: ClassVar[dict[str, dict]] = {
         "INACAPMail": {"usuarios_activos": 45_000, "critico": True},
         "LMS_Moodle": {"usuarios_activos": 38_000, "critico": True},
         "Intranet": {"usuarios_activos": 52_000, "critico": True},
@@ -245,7 +246,7 @@ class SimuladorDisponibilidad:
         """Simula un ataque de disponibilidad durante semana de exámenes."""
         print("\n" + "=" * 60)
         print(f"  🔴 SIMULACIÓN DE ATAQUE: {tipo}")
-        print(f"  Fecha simulada: SEMANA DE EXÁMENES FINALES")
+        print("  Fecha simulada: SEMANA DE EXÁMENES FINALES")
         print("=" * 60)
 
         total_afectados = 0
