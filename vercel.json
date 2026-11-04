@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/auditoria_seguridad_inacap.html"
+    }
+  ]
+}
