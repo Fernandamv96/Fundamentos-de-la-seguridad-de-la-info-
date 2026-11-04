@@ -29,7 +29,7 @@ python auditoria_seguridad_inacap.py
 
 > En la consola de Windows, si ves errores con los emojis, usa `set PYTHONIOENCODING=utf-8` (o Windows Terminal).
 
-**Simulador interactivo:** abre `auditoria_seguridad_inacap.html` en el navegador.
+**Simulador interactivo:** abre `site/index.html` en el navegador.
 
 **Tests y lint:**
 
@@ -69,7 +69,7 @@ ruff check . && ruff format --check .
 
 ```text
 ├── auditoria_seguridad_inacap.py    # simulación de los 3 principios CIA
-├── auditoria_seguridad_inacap.html  # versión interactiva (simulador en el navegador)
+├── site/index.html                 # versión interactiva (simulador en el navegador)
 ├── tests/test_auditoria.py          # pytest: matriz de permisos, hash, BCP
 ├── pyproject.toml                   # configuración de ruff y pytest
 └── requirements-dev.txt
